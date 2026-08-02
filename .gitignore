@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# Secrets — ne jamais commiter
+.env
+.env.local
+.env.*.local
+
+# Ancienne version (fichiers JSON + front vanilla), gardée le temps de vérifier
+# que tout fonctionne. Supprimez le dossier quand vous n'en avez plus besoin.
+_ancienne-version/
+
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+.vscode/

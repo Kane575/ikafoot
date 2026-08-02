@@ -1,0 +1,44 @@
+# Déploiement Render en un clic : "New > Blueprint", pointez sur ce dépôt.
+# Render crée la base et le service web, et les relie automatiquement.
+
+databases:
+  - name: ikafoot-db
+    databaseName: ikafoot
+    plan: free
+
+services:
+  - type: web
+    name: ikafoot
+    runtime: node
+    plan: free
+    region: frankfurt
+    # --include=dev est indispensable : Render applique NODE_ENV=production dès
+    # la phase de build, et npm omettrait alors les devDependencies — dont Vite,
+    # sans lequel `npm run build` échoue.
+    buildCommand: npm ci --include=dev && npm run build && npm run db:migrate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ikafoot-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true # Render génère un secret aléatoire au premier déploiement
+      - key: NODE_ENV
+        value: production
+      - key: DEFAULT_WEEKDAY_PRICE
+        value: 25000
+      - key: DEFAULT_WEEKEND_PRICE
+        value: 30000
+      # Heures pendant lesquelles un créneau reste bloqué en attente de l'acompte.
+      - key: BOOKING_HOLD_HOURS
+        value: 2
+      # À renseigner dans le dashboard Render avant de lancer `npm run db:seed`.
+      - key: ADMIN_PHONE
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Numéro mobile money affiché au client pour l'acompte (défaut : ADMIN_PHONE).
+      - key: PAYMENT_PHONE
+        sync: false

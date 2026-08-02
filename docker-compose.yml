@@ -1,0 +1,29 @@
+# Base PostgreSQL pour le développement local.
+#   docker compose up -d
+# Puis dans .env :
+#   DATABASE_URL=postgresql://ikafoot:ikafoot@localhost:5433/ikafoot
+#
+# Port 5433 côté machine, et non 5432 : un PostgreSQL installé nativement sous
+# Windows occupe déjà 5432. Les deux peuvent ainsi tourner en même temps.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ikafoot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ikafoot
+      POSTGRES_PASSWORD: ikafoot
+      POSTGRES_DB: ikafoot
+    ports:
+      - '5433:5432'
+    volumes:
+      - ikafoot-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ikafoot -d ikafoot']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ikafoot-pgdata:

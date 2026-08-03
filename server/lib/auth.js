@@ -51,7 +51,7 @@ export function requireAdmin(req, res, next) {
   next();
 }
 
-/** Normalise « 76 73 37 49 », « +223 76733749 » … vers une forme comparable. */
+/** Normalise « 76 35 88 77 », « +223 76358877 » … vers une forme comparable. */
 export function normalizePhone(value) {
   return String(value ?? '')
     .replace(/[^\d]/g, '')

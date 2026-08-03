@@ -114,15 +114,85 @@ et envoyés au front : ils ne sont écrits nulle part dans le React.
 
 ---
 
-## 4. Déployer sur Render
+## 4. Déployer
 
-Render héberge l'API et la base, gratuitement pour démarrer.
+Deux chemins. **Cloud Run + Neon** est celui qui tient dans la durée ; **Render**
+est celui qui demande le moins de manipulations.
+
+### Option A — Cloud Run + Neon (recommandé)
+
+La base vit chez Neon, l'application tourne sur Cloud Run à partir du
+`Dockerfile` du projet. Aucune ligne de code à changer : le serveur lit déjà le
+port imposé par l'hébergeur.
+
+**1. La base, chez Neon**
+
+Créez un projet Neon (région **Francfort**, la plus proche de Bamako parmi les
+régions européennes) et copiez sa chaîne de connexion — celle marquée
+**« Pooled connection »**, pas la directe : Cloud Run démarre plusieurs
+instances en parallèle et saturerait sinon les connexions PostgreSQL.
+
+**2. Préparer la base depuis votre PC**
+
+Pas besoin de shell distant, c'est le gros avantage de Neon :
+
+```bash
+export DATABASE_URL="postgresql://…-pooler.eu-central-1.aws.neon.tech/ikafoot?sslmode=require"
+export ADMIN_PASSWORD="un-mot-de-passe-solide"
+export ADMIN_PHONE="76358877"
+
+npm run db:migrate   # crée les tables
+npm run db:seed      # compte propriétaire + 140 créneaux
+```
+
+**3. Déployer l'application**
+
+Il faut le [SDK Google Cloud](https://cloud.google.com/sdk/docs/install) et un
+projet Google Cloud avec la facturation activée (obligatoire même pour rester
+dans le quota gratuit).
+
+```bash
+gcloud auth login
+gcloud config set project VOTRE-PROJET
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+
+gcloud run deploy ikafoot \
+  --source . \
+  --region europe-west3 \
+  --allow-unauthenticated \
+  --set-env-vars "DATABASE_URL=…,JWT_SECRET=…,PAYMENT_PHONE=76358877,BOOKING_HOLD_HOURS=2"
+```
+
+`--source .` fait construire l'image par Cloud Build à partir du `Dockerfile` :
+rien à pousser à la main. La région **europe-west3** est Francfort, comme la
+base — l'application et la base doivent être proches l'une de l'autre, c'est ce
+trajet-là qui pèse sur les temps de réponse, pas la distance jusqu'au visiteur.
+
+> **Ne définissez jamais `PORT`** dans les variables : Cloud Run l'impose
+> lui-même et refuse le déploiement si vous l'écrasez. Le serveur le lit déjà.
+
+**4. Les mises à jour**
+
+Le code : relancez la même commande `gcloud run deploy`.
+Le schéma : `npm run db:migrate` depuis votre PC, avec `DATABASE_URL` pointé sur
+Neon. Contrairement à Render, **rien ne le fait automatiquement au déploiement**.
+
+Pour un site public, `--set-env-vars` laisse le mot de passe de la base visible
+dans la console Google. Dès que ce n'est plus un test, passez par Secret Manager
+et `--set-secrets`.
+
+### Option B — Render
+
+Render héberge l'API et la base, gratuitement pour démarrer. Attention : l'offre
+gratuite **met le service en veille** après un quart d'heure sans visite, et le
+réveil prend une trentaine de secondes — acceptable pour une démonstration, pas
+pour de vrais clients.
 
 1. Poussez le projet sur GitHub.
 2. Sur Render : **New → Blueprint**, sélectionnez le dépôt. Le fichier
    `render.yaml` décrit déjà la base et le service web, et les relie.
 3. Dans **Environment**, renseignez les variables laissées vides :
-   - `ADMIN_PHONE` — le numéro du propriétaire (ex. `76733749`)
+   - `ADMIN_PHONE` — le numéro du propriétaire (ex. `76358877`)
    - `ADMIN_PASSWORD` — son mot de passe
    - `PAYMENT_PHONE` — le numéro mobile money qui reçoit les acomptes
      (facultatif : `ADMIN_PHONE` est utilisé s'il est vide)
@@ -136,7 +206,7 @@ Render héberge l'API et la base, gratuitement pour démarrer.
 Le déploiement est terminé. `npm run db:migrate` tourne à chaque build : les
 futures modifications du schéma s'appliquent toutes seules.
 
-### Ailleurs (Railway, Fly, VPS)
+### Ailleurs (Koyeb, Fly, VPS)
 
 Un `Dockerfile` est fourni : l'image contient l'API **et** l'interface compilée,
 donc un seul service à déployer. Il lui faut ces variables d'environnement :
@@ -150,10 +220,13 @@ PORT=3002             # ou ce que l'hébergeur impose
 
 Puis, une seule fois : `npm run db:migrate && npm run db:seed`.
 
-> **Netlify et Vercel ne conviennent pas ici** : ils servent des fichiers
-> statiques, ils ne peuvent pas faire tourner le serveur Express ni la base.
-> C'était le problème de l'ancien `netlify.toml` — le site s'affichait mais
-> aucune réservation ne fonctionnait.
+> **Netlify et Vercel demandent une adaptation.** Tels quels, ils ne font pas
+> tourner un processus Express en continu — c'était le problème de l'ancien
+> `netlify.toml` : le site s'affichait, mais aucune réservation ne fonctionnait.
+> Vercel sait toutefois exécuter l'application comme fonction serverless, à
+> condition de séparer `app` de son `listen`, d'ajouter un point d'entrée
+> `api/index.js` et un `vercel.json`, et de brancher une base externe. Réservez
+> ça aux essais : l'offre gratuite de Vercel exclut l'usage commercial.
 
 ---
 

@@ -4,9 +4,18 @@ import pg from 'pg';
 const { Pool } = pg;
 
 if (!process.env.DATABASE_URL) {
-  console.error(
-    'DATABASE_URL est absent. Copiez .env.example vers .env puis renseignez votre chaîne de connexion PostgreSQL.'
-  );
+  const message =
+    'DATABASE_URL est absent. En local : copiez .env.example vers .env. ' +
+    'Sur un hébergeur : ajoutez la variable dans la configuration du service.';
+  console.error(message);
+
+  // Un serveur classique s'arrête net : mieux vaut échouer au démarrage que
+  // servir des requêtes cassées. En serverless, quitter le processus produit
+  // une erreur opaque côté client — on lève, pour que la cause soit lisible
+  // dans les journaux de la fonction.
+  if (process.env.VERCEL) {
+    throw new Error(message);
+  }
   process.exit(1);
 }
 

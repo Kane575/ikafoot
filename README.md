@@ -220,21 +220,50 @@ PORT=3002             # ou ce que l'hébergeur impose
 
 Puis, une seule fois : `npm run db:migrate && npm run db:seed`.
 
-> **Netlify et Vercel demandent une adaptation.** Tels quels, ils ne font pas
-> tourner un processus Express en continu — c'était le problème de l'ancien
-> `netlify.toml` : le site s'affichait, mais aucune réservation ne fonctionnait.
-> Vercel sait toutefois exécuter l'application comme fonction serverless, à
-> condition de séparer `app` de son `listen`, d'ajouter un point d'entrée
-> `api/index.js` et un `vercel.json`, et de brancher une base externe. Réservez
-> ça aux essais : l'offre gratuite de Vercel exclut l'usage commercial.
+### Option C — Vercel (pour les essais)
+
+Vercel ne fait pas tourner un processus Express en continu, mais il sait
+l'exécuter **comme fonction serverless**. Le projet est prêt pour ça :
+
+- `server/app.js` construit l'application, `server/index.js` l'écoute sur un
+  port, `api/[...path].js` l'exporte comme fonction. Le même code sert les deux.
+- Le nom `[...path].js` est un « catch-all » : Vercel y envoie tout `/api/…` en
+  conservant l'URL, donc Express retrouve ses routes sans réécriture.
+- Sur Vercel, l'application **ne sert plus les fichiers du site** (leur CDN s'en
+  charge) : c'est la variable `VERCEL`, posée automatiquement, qui le décide.
+- `vercel.json` renvoie les routes du navigateur (`/reserver`, `/admin`) vers
+  `index.html`.
+
+Marche à suivre : importez le dépôt sur Vercel, puis renseignez dans
+**Settings → Environment Variables** :
+
+```
+DATABASE_URL   la chaîne « pooled » de Neon
+JWT_SECRET     long, aléatoire, différent de celui du .env local
+PAYMENT_PHONE  76358877
+```
+
+La base doit être préparée depuis votre PC (`npm run db:migrate` puis
+`npm run db:seed`, avec `DATABASE_URL` pointé sur Neon), exactement comme pour
+Cloud Run.
+
+> **À réserver aux essais.** L'offre gratuite de Vercel (Hobby) **exclut l'usage
+> commercial** : dès que de vrais clients réservent et paient, il faut le plan
+> payant. Par ailleurs le limiteur anti-force brute de `/api/admin/login` vit en
+> mémoire : en serverless, chaque instance a le sien, la protection se dilue.
+> C'était déjà une limite connue, le serverless l'aggrave.
 
 ---
 
 ## 5. Structure
 
 ```
+api/
+  [...path].js        Point d'entrée serverless (Vercel) : exporte l'application
+vercel.json           Build et routage Vercel
 server/
-  index.js            Serveur Express : API + interface compilée en production
+  app.js              L'application Express (routes, middlewares) sans démarrage
+  index.js            Démarrage classique : écoute un port, sert aussi dist/
   db.js               Pool PostgreSQL
   schema.sql          Les tables
   migrate.js          Applique le schéma

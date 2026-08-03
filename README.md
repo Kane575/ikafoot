@@ -3,8 +3,7 @@
 Réservation en ligne de créneaux de terrain de football.
 
 - **Côté client** : une vitrine d'accueil, le planning des 7 prochains jours, les
-  tarifs, la réservation, et la possibilité de retrouver ou d'annuler sa
-  réservation avec son numéro.
+  tarifs, la réservation, et la consultation de sa réservation avec son numéro.
 - **Côté propriétaire** : les réservations, les acomptes à encaisser, les recettes
   attendues, et la gestion des créneaux hebdomadaires et de leurs tarifs.
 
@@ -64,6 +63,7 @@ L'interface est sur <http://127.0.0.1:4173>, l'espace propriétaire sur
 | `npm run db:migrate` | Applique `server/schema.sql` (ré-exécutable sans risque)    |
 | `npm run db:seed`    | Crée/met à jour le compte admin et le planning par défaut   |
 | `npm run db:reset`   | **Efface tout** puis recrée. À n'utiliser qu'en local.      |
+| `npm run db:bookings:clear` | Efface les réservations, garde créneaux et compte admin |
 
 ---
 
@@ -255,7 +255,83 @@ Cloud Run.
 
 ---
 
-## 5. Structure
+## 5. Valider avant d'automatiser le paiement
+
+**Le site est déjà exploitable tel quel.** L'acompte se verse par transfert
+mobile money ordinaire et le propriétaire le pointe à la main : c'est un mode de
+fonctionnement complet, pas un pis-aller. L'intégration d'un paiement en ligne
+ne changera pas les règles, elle supprimera seulement ce pointage manuel.
+
+### Le délai de garde pendant la validation
+
+Par défaut un créneau non payé se libère au bout de **20 minutes**. C'est le bon
+réglage quand le paiement est automatique. Tant qu'il est manuel, c'est serré :
+le client doit composer son USSD, et le propriétaire voir le SMS puis cliquer.
+Pendant la phase de validation, mettez `BOOKING_HOLD_MINUTES=120` :
+
+```bash
+npx vercel env rm BOOKING_HOLD_MINUTES production --yes
+printf '120' | npx vercel env add BOOKING_HOLD_MINUTES production
+npx vercel deploy --prod
+```
+
+Les variables ne sont lues qu'au déploiement : sans le dernier appel, rien ne
+change.
+
+### Le scénario à jouer avec le propriétaire
+
+À deux téléphones, l'un jouant le client, l'autre le propriétaire.
+
+| # | Qui | Action | Ce qu'on vérifie |
+| - | --- | ------ | ---------------- |
+| 1 | Client | Ouvre le site, choisit un jour et une heure | Le planning affiche les bons tarifs, semaine et week-end |
+| 2 | Client | Réserve avec son vrai nom et son numéro | Il obtient une référence et le montant de l'acompte |
+| 3 | Autre | Tente le même créneau | Refusé : « ce créneau vient d'être réservé » |
+| 4 | Proprio | Ouvre `/admin` | La réservation apparaît « en attente », avec le compte à rebours |
+| 5 | Client | Envoie l'acompte par mobile money, en citant sa référence | Le propriétaire reçoit le SMS d'Orange |
+| 6 | Proprio | Clique « Acompte reçu » | La réservation passe « confirmée », les recettes se mettent à jour |
+| 7 | Client | Cherche son numéro dans « Mes réservations » | Il voit « Confirmée » |
+| 8 | — | Laisser expirer une **autre** réservation sans payer | Elle passe « acompte non reçu » et le créneau redevient libre |
+
+L'étape 8 est la plus importante : c'est elle qui prouve qu'un client qui ne
+paie pas ne bloque pas le terrain.
+
+### Repartir d'une base propre
+
+Après la séance, effacez les réservations d'essai sans toucher aux créneaux ni
+au compte propriétaire :
+
+```bash
+# Voir ce qui serait effacé (ne supprime rien)
+DATABASE_URL="postgresql://…" npm run db:bookings:clear
+
+# Effacer pour de bon
+DATABASE_URL="postgresql://…" npm run db:bookings:clear -- --yes
+
+# Ou seulement les essais d'un numéro
+DATABASE_URL="postgresql://…" npm run db:bookings:clear -- --yes --phone 76001122
+```
+
+Sans `--yes`, la commande se contente d'annoncer ce qu'elle ferait et rappelle
+quelle base est visée : elle peut viser la production.
+
+### Ce que cette validation doit trancher
+
+Le paiement en ligne coûte du temps et des démarches. Avant de s'y engager,
+cette phase doit répondre à :
+
+- Les **tarifs** sont-ils justes ? 25 000 F l'heure en semaine, 30 000 le
+  week-end — c'est le réglage actuel, il se change dans l'espace propriétaire.
+- Les **horaires** : 20 créneaux par jour de 06:00 à 02:00, est-ce la réalité du
+  terrain ? Les créneaux inutiles se désactivent un par un.
+- Le **délai de garde** : combien de temps le propriétaire met-il réellement à
+  confirmer un acompte ?
+- L'**acompte de 50 %** est-il accepté par les clients, ou faut-il un autre taux
+  (`DEPOSIT_RATIO` dans `server/lib/schedule.js`) ?
+
+---
+
+## 6. Structure
 
 ```
 api/
@@ -334,7 +410,7 @@ entière — seuls les chiffres manquent.
 
 ---
 
-## 6. Sécurité
+## 7. Sécurité
 
 - Le mot de passe admin est stocké **haché** (bcrypt, coût 12). Il n'apparaît
   ni dans le code, ni dans le dépôt : il vient de `ADMIN_PASSWORD`.
@@ -358,7 +434,7 @@ développement en production.
 
 ---
 
-## 7. Le dossier `_ancienne-version/`
+## 8. Le dossier `_ancienne-version/`
 
 Il contient l'ancienne version (front en JavaScript pur, données dans des
 fichiers JSON, `netlify.toml`). Elle n'est plus utilisée par l'application.

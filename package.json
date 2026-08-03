@@ -14,7 +14,8 @@
     "start": "node server/index.js",
     "db:migrate": "node server/migrate.js",
     "db:seed": "node server/seed.js",
-    "db:reset": "node server/migrate.js --reset && node server/seed.js"
+    "db:reset": "node server/migrate.js --reset && node server/seed.js",
+    "db:bookings:clear": "node server/clear-bookings.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

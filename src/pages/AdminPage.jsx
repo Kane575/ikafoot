@@ -293,10 +293,14 @@ function BookingsTab({ notify, onAuthError }) {
                     <td data-label="Prix">{formatPrice(booking.price)}</td>
                     <td data-label="Acompte">{formatPrice(booking.deposit)}</td>
                     <td data-label="État">
-                      <span className={`tag tag--${status.tone}`}>{status.label}</span>
-                      {booking.status === 'pending' && booking.holdExpiresAt && (
-                        <span className="muted"> jusqu’à {formatDeadline(booking.holdExpiresAt)}</span>
-                      )}
+                      {/* Regroupés : sinon le délai part seul à la ligne
+                          quand la cellule devient une fiche sur mobile. */}
+                      <span className="cell-stack">
+                        <span className={`tag tag--${status.tone}`}>{status.label}</span>
+                        {booking.status === 'pending' && booking.holdExpiresAt && (
+                          <span className="muted">jusqu’à {formatDeadline(booking.holdExpiresAt)}</span>
+                        )}
+                      </span>
                     </td>
                     <td data-label="Réf." className="mono">{booking.reference}</td>
                     <td className="row-actions">

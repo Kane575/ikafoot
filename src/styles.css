@@ -1530,11 +1530,47 @@ a:focus-visible {
   }
 }
 
-@media (max-width: 640px) {
-  h1 {
-    font-size: 1.45rem;
+/* --- Pages de travail sur mobile : réservation et espace propriétaire ------- */
+
+@media (max-width: 760px) {
+  main.page.container {
+    padding-block: 1.25rem 2.25rem;
+    gap: 1rem;
   }
 
+  .panel {
+    padding: 1.1rem;
+  }
+
+  .panel__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .intro {
+    gap: 0.75rem;
+  }
+
+  .intro__stat {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  /* Le bandeau des 7 jours défile horizontalement, un jour à la fois. */
+  .day-strip {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 4.75rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .day {
+    scroll-snap-align: start;
+  }
+
+  /* Créneau : horaire et prix à gauche, action à droite, sur deux lignes. */
   .slot {
     grid-template-columns: 1fr auto;
     gap: 0.35rem 1rem;
@@ -1544,12 +1580,153 @@ a:focus-visible {
   .slot__meta {
     grid-column: 1;
     grid-row: 2;
+    gap: 0.5rem;
   }
 
   .slot__action {
     grid-column: 2;
     grid-row: 1 / span 2;
     align-self: center;
+  }
+
+  /* Un doigt vise mal : les actions prennent toute la largeur. */
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn,
+  .inline-form .btn {
+    width: 100%;
+  }
+
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking,
+  .template {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking .btn {
+    width: 100%;
+  }
+
+  .template__actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .template__actions .btn {
+    flex: 1;
+  }
+
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* --- Le tableau des réservations devient une pile de fiches ---------------
+     Dix colonnes en `nowrap` sur un téléphone, c'est un mètre de défilement
+     horizontal. Chaque ligne devient donc une carte, et les `data-label` du
+     JSX remplacent les en-têtes de colonnes. */
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table {
+    white-space: normal;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .table td {
+    border: none;
+    padding: 0.2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 0.78rem;
+    color: var(--faint);
+  }
+
+  /* La date sert de titre à la fiche : pas d'étiquette, et un trait dessous. */
+  .table td:first-child {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table td:first-child::before,
+  .row-actions::before {
+    display: none;
+  }
+
+  /* Cellule d'actions vide (réservation annulée) : rien à afficher. */
+  .table td:empty {
+    display: none;
+  }
+
+  .row-actions {
+    justify-content: stretch;
+    gap: 0.5rem;
+    margin-top: 0.7rem;
+  }
+
+  .row-actions .btn {
+    flex: 1;
+  }
+
+  /* Barrer une fiche entière la rend illisible : on la grise. */
+  .table tr.is-cancelled {
+    opacity: 0.6;
+  }
+
+  .table tr.is-cancelled td {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .modal {
+    padding: 1.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.45rem;
   }
 
   /* --- Vitrine sur petit écran --- */
@@ -1599,18 +1776,8 @@ a:focus-visible {
     flex: 1 1 auto;
   }
 
-  .intro__stat {
-    border-left: none;
-    padding-left: 0;
-  }
-
   .field-row {
     grid-template-columns: 1fr;
   }
 
-  .booking,
-  .template {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 }

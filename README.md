@@ -139,7 +139,7 @@ Pas besoin de shell distant, c'est le gros avantage de Neon :
 ```bash
 export DATABASE_URL="postgresql://…-pooler.eu-central-1.aws.neon.tech/ikafoot?sslmode=require"
 export ADMIN_PASSWORD="un-mot-de-passe-solide"
-export ADMIN_PHONE="76358877"
+export ADMIN_PHONE="76958877"
 
 npm run db:migrate   # crée les tables
 npm run db:seed      # compte propriétaire + 140 créneaux
@@ -160,7 +160,7 @@ gcloud run deploy ikafoot \
   --source . \
   --region europe-west3 \
   --allow-unauthenticated \
-  --set-env-vars "DATABASE_URL=…,JWT_SECRET=…,PAYMENT_PHONE=76358877,BOOKING_HOLD_HOURS=2"
+  --set-env-vars "DATABASE_URL=…,JWT_SECRET=…,PAYMENT_PHONE=76958877,BOOKING_HOLD_HOURS=2"
 ```
 
 `--source .` fait construire l'image par Cloud Build à partir du `Dockerfile` :
@@ -192,7 +192,7 @@ pour de vrais clients.
 2. Sur Render : **New → Blueprint**, sélectionnez le dépôt. Le fichier
    `render.yaml` décrit déjà la base et le service web, et les relie.
 3. Dans **Environment**, renseignez les variables laissées vides :
-   - `ADMIN_PHONE` — le numéro du propriétaire (ex. `76358877`)
+   - `ADMIN_PHONE` — le numéro du propriétaire (ex. `76958877`)
    - `ADMIN_PASSWORD` — son mot de passe
    - `PAYMENT_PHONE` — le numéro mobile money qui reçoit les acomptes
      (facultatif : `ADMIN_PHONE` est utilisé s'il est vide)
@@ -240,7 +240,7 @@ Marche à suivre : importez le dépôt sur Vercel, puis renseignez dans
 ```
 DATABASE_URL   la chaîne « pooled » de Neon
 JWT_SECRET     long, aléatoire, différent de celui du .env local
-PAYMENT_PHONE  76358877
+PAYMENT_PHONE  76958877
 ```
 
 La base doit être préparée depuis votre PC (`npm run db:migrate` puis

@@ -26,7 +26,7 @@ const defaultTemplates = Array.from({ length: 7 }, (_, weekday) =>
 ).flat();
 
 async function main() {
-  const phone = normalizePhone(process.env.ADMIN_PHONE || '76358877');
+  const phone = normalizePhone(process.env.ADMIN_PHONE || '76958877');
   const password = process.env.ADMIN_PASSWORD;
   const name = process.env.ADMIN_NAME || 'Propriétaire IKAFOOT';
 

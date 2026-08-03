@@ -277,25 +277,28 @@ function BookingsTab({ notify, onAuthError }) {
                 const isDead = booking.status === 'cancelled' || booking.status === 'expired';
 
                 return (
+                  // Les `data-label` ne servent à rien sur grand écran : sous
+                  // 760 px, le tableau devient une pile de fiches et c'est eux
+                  // qui portent le nom de chaque champ.
                   <tr key={booking.id} className={isDead ? 'is-cancelled' : undefined}>
-                    <td>{formatLongDate(booking.date)}</td>
-                    <td>
+                    <td data-label="Date">{formatLongDate(booking.date)}</td>
+                    <td data-label="Horaire">
                       {booking.start} – {booking.end}
                     </td>
-                    <td>{booking.customerName}</td>
-                    <td>
+                    <td data-label="Client">{booking.customerName}</td>
+                    <td data-label="Téléphone">
                       <a href={`tel:${booking.phone}`}>{booking.phone}</a>
                     </td>
-                    <td>{booking.players}</td>
-                    <td>{formatPrice(booking.price)}</td>
-                    <td>{formatPrice(booking.deposit)}</td>
-                    <td>
+                    <td data-label="Format">{booking.players}</td>
+                    <td data-label="Prix">{formatPrice(booking.price)}</td>
+                    <td data-label="Acompte">{formatPrice(booking.deposit)}</td>
+                    <td data-label="État">
                       <span className={`tag tag--${status.tone}`}>{status.label}</span>
                       {booking.status === 'pending' && booking.holdExpiresAt && (
                         <span className="muted"> jusqu’à {formatDeadline(booking.holdExpiresAt)}</span>
                       )}
                     </td>
-                    <td className="mono">{booking.reference}</td>
+                    <td data-label="Réf." className="mono">{booking.reference}</td>
                     <td className="row-actions">
                       {booking.status === 'pending' && (
                         <button

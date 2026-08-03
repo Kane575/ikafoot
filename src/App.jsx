@@ -4,8 +4,8 @@ import BookingPage from './pages/BookingPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import Toast from './components/Toast.jsx';
 
-const PHONE_DISPLAY = '76 35 88 77';
-const PHONE_LINK = '+22376358877';
+const PHONE_DISPLAY = '76 95 88 77';
+const PHONE_LINK = '+22376958877';
 
 export default function App() {
   const [path, setPath] = useState(() => window.location.pathname);

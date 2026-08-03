@@ -31,9 +31,9 @@ services:
         value: 25000
       - key: DEFAULT_WEEKEND_PRICE
         value: 30000
-      # Heures pendant lesquelles un créneau reste bloqué en attente de l'acompte.
-      - key: BOOKING_HOLD_HOURS
-        value: 2
+      # Minutes pendant lesquelles un créneau reste bloqué en attente de l'acompte.
+      - key: BOOKING_HOLD_MINUTES
+        value: 20
       # À renseigner dans le dashboard Render avant de lancer `npm run db:seed`.
       - key: ADMIN_PHONE
         sync: false

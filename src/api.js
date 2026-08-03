@@ -47,13 +47,9 @@ export const api = {
 
   createBooking: (payload) => request('/api/bookings', { method: 'POST', body: payload }),
 
+  // Consultation seule : l'annulation par le client a été retirée, elle
+  // permettait d'annuler la réservation d'autrui avec son seul numéro.
   lookupBookings: (phone) => request('/api/bookings/lookup', { params: { phone } }),
-
-  cancelBooking: (reference, phone) =>
-    request(`/api/bookings/${encodeURIComponent(reference)}/cancel`, {
-      method: 'POST',
-      body: { phone },
-    }),
 
   adminLogin: (payload) => request('/api/admin/login', { method: 'POST', body: payload }),
   adminLogout: () => request('/api/admin/logout', { method: 'POST' }),

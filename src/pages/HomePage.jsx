@@ -244,9 +244,10 @@ export default function HomePage({ navigate, phoneDisplay, phoneLink }) {
               l’heure est à vous, personne d’autre ne peut la prendre.
             </Question>
             <Question question="Et si je ne verse pas l’acompte tout de suite ?">
-              Le créneau vous est gardé quelques heures. Passé ce délai sans
-              paiement, il repart automatiquement à la réservation — vous n’avez
-              rien à faire, et rien à payer.
+              Le créneau vous est gardé <strong>20 minutes</strong>. Passé ce
+              délai sans paiement, il repart automatiquement à la réservation —
+              vous n’avez rien à faire, et rien à payer. Le délai est court
+              parce qu’un créneau bloqué est un créneau refusé à d’autres.
             </Question>
             <Question question="Comment j’annule ?">
               Depuis la page de réservation, avec votre numéro de téléphone et

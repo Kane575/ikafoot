@@ -3,7 +3,7 @@ import { query } from '../db.js';
 import { route } from '../lib/async-handler.js';
 import {
   DEPOSIT_RATIO,
-  HOLD_HOURS,
+  HOLD_MINUTES,
   HORIZON_DAYS,
   PAYMENT_PHONE,
   depositFor,
@@ -65,7 +65,7 @@ function serializeBooking(row) {
 /** Les règles de paiement, affichées au client avant qu'il ne réserve. */
 const paymentTerms = {
   depositPercent: Math.round(DEPOSIT_RATIO * 100),
-  holdHours: HOLD_HOURS,
+  holdMinutes: HOLD_MINUTES,
   phone: PAYMENT_PHONE,
 };
 
@@ -142,7 +142,16 @@ router.post('/bookings', route(async (req, res) => {
   }
 }));
 
-/** « Mes réservations » : recherche par numéro de téléphone. */
+/**
+ * « Mes réservations » : consultation par numéro de téléphone.
+ *
+ * En **lecture seule**, volontairement. Une annulation par le client a existé
+ * ici : elle ne demandait que la référence et le numéro, or cette recherche
+ * affiche justement la référence. N'importe qui connaissant un numéro pouvait
+ * donc annuler les réservations de son propriétaire. Les créneaux non payés se
+ * libèrent d'eux-mêmes au bout de BOOKING_HOLD_MINUTES ; pour annuler une
+ * réservation déjà confirmée, il faut passer par le propriétaire.
+ */
 router.get('/bookings/lookup', route(async (req, res) => {
   const phone = requirePhone(req.query?.phone);
   await releaseExpiredHolds();
@@ -158,28 +167,6 @@ router.get('/bookings/lookup', route(async (req, res) => {
   );
 
   res.json({ bookings: result.rows.map(serializeBooking) });
-}));
-
-/** Annulation par le client : il doit fournir sa référence ET son numéro. */
-router.post('/bookings/:reference/cancel', route(async (req, res) => {
-  const reference = String(req.params.reference ?? '').trim().toUpperCase();
-  const phone = requirePhone(req.body?.phone);
-
-  const result = await query(
-    `UPDATE bookings
-        SET status = 'cancelled', cancelled_at = now(), hold_expires_at = NULL
-      WHERE reference = $1
-        AND phone = $2
-        AND status IN ('pending', 'confirmed')
-      RETURNING id`,
-    [reference, phone]
-  );
-
-  if (result.rowCount === 0) {
-    throw new HttpError(404, 'Aucune réservation active ne correspond à cette référence et ce numéro.');
-  }
-
-  res.json({ message: 'Réservation annulée.' });
 }));
 
 export default router;

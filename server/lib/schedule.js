@@ -119,8 +119,11 @@ export function priceFor(template, weekend) {
 /** Part du prix à verser d'avance pour garantir le créneau. */
 export const DEPOSIT_RATIO = 0.5;
 
-/** Délai laissé au client pour verser l'acompte avant que le créneau soit rendu. */
-export const HOLD_HOURS = Number(process.env.BOOKING_HOLD_HOURS) || 2;
+/**
+ * Délai laissé au client pour verser l'acompte avant que le créneau soit rendu.
+ * Court volontairement : un créneau bloqué est un créneau refusé aux autres.
+ */
+export const HOLD_MINUTES = Number(process.env.BOOKING_HOLD_MINUTES) || 20;
 
 /** Numéro sur lequel l'acompte est envoyé (mobile money). */
 export const PAYMENT_PHONE = process.env.PAYMENT_PHONE || process.env.ADMIN_PHONE || '';
@@ -135,7 +138,7 @@ export function depositFor(price) {
  * du match : un créneau qui commence dans une heure ne peut pas être tenu deux.
  */
 export function holdExpiresAt(isoDate, startTime, now = new Date()) {
-  const limit = new Date(now.getTime() + HOLD_HOURS * 60 * 60 * 1000);
+  const limit = new Date(now.getTime() + HOLD_MINUTES * 60 * 1000);
   const date = parseISODate(isoDate);
   if (!date) return limit;
 

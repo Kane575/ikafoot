@@ -96,7 +96,7 @@ Une réservation n'est pas confirmée par le simple fait de cliquer : il faut
 verser **la moitié du prix** (12 500 FCFA en semaine, 15 000 le week-end).
 
 1. Le client réserve → la réservation est **`pending`**, et le créneau est
-   **bloqué** pendant `BOOKING_HOLD_HOURS` heures (2 par défaut) — jamais au-delà
+   **bloqué** pendant `BOOKING_HOLD_MINUTES` minutes (20 par défaut) — jamais au-delà
    de l'heure de début du match.
 2. Il envoie l'acompte sur le numéro `PAYMENT_PHONE` en indiquant sa référence.
 3. Le propriétaire pointe **« Acompte reçu »** dans son espace → la réservation
@@ -160,7 +160,7 @@ gcloud run deploy ikafoot \
   --source . \
   --region europe-west3 \
   --allow-unauthenticated \
-  --set-env-vars "DATABASE_URL=…,JWT_SECRET=…,PAYMENT_PHONE=76958877,BOOKING_HOLD_HOURS=2"
+  --set-env-vars "DATABASE_URL=…,JWT_SECRET=…,PAYMENT_PHONE=76958877,BOOKING_HOLD_MINUTES=20"
 ```
 
 `--source .` fait construire l'image par Cloud Build à partir du `Dockerfile` :
@@ -347,8 +347,11 @@ entière — seuls les chiffres manquent.
   **ou** `confirmed`) sur le même créneau, même si deux clients valident
   exactement au même instant.
 - Le montant de l'acompte est **calculé côté serveur**, jamais reçu du client.
-- Les numéros de téléphone des clients ne sont **jamais affichés publiquement** :
-  il faut connaître un numéro pour voir les réservations qui lui sont rattachées.
+- La recherche « mes réservations » est en **lecture seule**. Une annulation par
+  le client a existé : elle ne demandait que la référence et le numéro, or la
+  recherche affiche la référence — quiconque connaissait un numéro pouvait donc
+  annuler les réservations d'autrui. Route supprimée. Les créneaux non payés
+  se libèrent seuls ; une réservation confirmée s'annule auprès du propriétaire.
 
 **À ne jamais faire** : commiter `.env`, ou réutiliser le `JWT_SECRET` de
 développement en production.

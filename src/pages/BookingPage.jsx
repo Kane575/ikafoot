@@ -100,27 +100,6 @@ export default function BookingPage({ notify }) {
     }
   }
 
-  async function cancelMyBooking(booking) {
-    const confirmed = window.confirm(
-      `Annuler la réservation ${booking.reference} du ${formatLongDate(booking.date)} à ${booking.start} ?`
-    );
-    if (!confirmed) return;
-
-    try {
-      await api.cancelBooking(booking.reference, lookupPhone.trim());
-      notify('Réservation annulée.');
-      setMyBookings((current) =>
-        current.map((item) =>
-          item.reference === booking.reference ? { ...item, status: 'cancelled' } : item
-        )
-      );
-      if (confirmation?.reference === booking.reference) setConfirmation(null);
-      await loadSchedule();
-    } catch (error) {
-      notify(error.message, 'error');
-    }
-  }
-
   if (loading) {
     return <p className="placeholder">Chargement du planning…</p>;
   }
@@ -138,7 +117,7 @@ export default function BookingPage({ notify }) {
   }
 
   // Les règles d'acompte viennent du serveur : elles ne sont écrites nulle part ici.
-  const payment = schedule.payment ?? { depositPercent: 50, holdHours: 2, phone: '' };
+  const payment = schedule.payment ?? { depositPercent: 50, holdMinutes: 20, phone: '' };
 
   return (
     <>
@@ -147,7 +126,7 @@ export default function BookingPage({ notify }) {
           <h1>Réservez votre créneau</h1>
           <p className="muted">
             Choisissez un jour, puis une heure libre. Le créneau vous est gardé{' '}
-            {payment.holdHours} h, le temps de verser {payment.depositPercent} %
+            {payment.holdMinutes} minutes, le temps de verser {payment.depositPercent} %
             d’acompte — c’est lui qui confirme la réservation. Le reste se règle
             sur place.
           </p>
@@ -187,8 +166,7 @@ export default function BookingPage({ notify }) {
             Votre référence : <strong>{confirmation.reference}</strong>
           </p>
           <p className="muted">
-            Notez-la : elle vous sert à annuler, et à être identifié quand vous
-            envoyez l’acompte.
+            Notez-la : c’est elle qui vous identifie quand vous envoyez l’acompte.
           </p>
           <button type="button" className="btn btn--ghost" onClick={() => setConfirmation(null)}>
             Fermer
@@ -274,7 +252,8 @@ export default function BookingPage({ notify }) {
       <section className="panel">
         <h2>Mes réservations</h2>
         <p className="muted">
-          Entrez le numéro utilisé lors de la réservation pour la retrouver ou l’annuler.
+          Entrez le numéro utilisé lors de la réservation pour la retrouver et
+          vérifier où elle en est.
         </p>
 
         <form className="inline-form" onSubmit={runLookup}>
@@ -301,7 +280,6 @@ export default function BookingPage({ notify }) {
             <ul className="booking-list">
               {myBookings.map((booking) => {
                 const status = BOOKING_STATUS[booking.status] ?? BOOKING_STATUS.cancelled;
-                const isLive = booking.status === 'pending' || booking.status === 'confirmed';
 
                 return (
                   <li key={booking.reference} className="booking">
@@ -320,20 +298,18 @@ export default function BookingPage({ notify }) {
                       )}
                       <span className="reference-inline">{booking.reference}</span>
                     </div>
-                    {isLive && (
-                      <button
-                        type="button"
-                        className="btn btn--danger"
-                        onClick={() => cancelMyBooking(booking)}
-                      >
-                        Annuler
-                      </button>
-                    )}
                   </li>
                 );
               })}
             </ul>
           ))}
+
+        <p className="muted">
+          Une réservation non payée se libère toute seule au bout de{' '}
+          {payment.holdMinutes} minutes. Pour annuler une réservation déjà
+          confirmée, appelez le{' '}
+          {payment.phone ? <a href={`tel:${payment.phone}`}>{payment.phone}</a> : 'terrain'}.
+        </p>
       </section>
 
       {selectedSlot && (
@@ -344,7 +320,7 @@ export default function BookingPage({ notify }) {
         >
           <p className="deposit-note">
             Acompte de <strong>{formatPrice(selectedSlot.deposit)}</strong> à verser
-            dans les {payment.holdHours} h pour confirmer. Le créneau est bloqué
+            dans les {payment.holdMinutes} minutes pour confirmer. Le créneau est bloqué
             pendant ce délai.
           </p>
 
